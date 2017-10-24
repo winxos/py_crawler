@@ -8,7 +8,9 @@ import urllib.request
 import urllib.error
 from lxml import etree
 import logging
+import socket
 
+socket.setdefaulttimeout(3)
 logging.basicConfig(
     level=logging.DEBUG,
     filename='log.txt',
@@ -27,7 +29,7 @@ def charset_detect(f):
     return None
 
 
-def get_content(url, try_times=1):
+def get_content(url, try_times=3):
     logging.debug("visiting:" + url)
     try:
         proxy_handler = urllib.request.ProxyHandler({'http': 'http://127.0.0.1:1080'})
@@ -35,14 +37,17 @@ def get_content(url, try_times=1):
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         f = opener.open(url).read()
         try:
-            # data = f.decode(f.headers.get_content_charset())
+            # data = f.decode(f.headers.get_content_charset()) #not robust
             logging.debug("charset " + charset_detect(f))
             data = f.decode(charset_detect(f))
             return etree.HTML(data)
         except Exception as e:
             logging.debug(e)
         return None
-    except urllib.error.URLError or TimeoutError:  # 捕捉访问异常，一般为timeout，信息在e中
+    except urllib.error.URLError as e:  # 捕捉访问异常，一般为timeout，信息在e中
+        logging.debug("%s %s" % (e, url))
+        return None
+    except TimeoutError:
         logging.debug("[retry %d] %s" % (try_times, url))
         try_times -= 1
         if try_times > 0:
@@ -55,10 +60,26 @@ def create_pages():
     return [entry % i for i in range(1, 101)]
 
 
+elements = {"item": {"type": "td[2]/text()",
+                     "title": "td[2]/h3/a/text()",
+                     "url": "td[2]/h3/a/@href",
+                     "author": "td[3]/a/text()"},
+            "sub_item": {"text": "//div[@class=\"tpc_content do_not_catch\"/a/text()"},
+            "root": "//tr[@class=\"tr3 t_one tac\"]"}
+
+
 def test_py_crawler():
     pages = create_pages()
-    get_content(pages[0])
-    get_content("http://google.com")
+    ir = get_content(pages[0]).xpath(elements["root"])
+    for i in elements["item"]:
+        print(''.join(ir[4].xpath(elements["item"][i])).strip())
+    sub_page_url = "http://www.t66y.com/" + ''.join(ir[4].xpath(elements["item"]["url"]))
+    print(sub_page_url)
+    sub_page = get_content(sub_page_url)
+    print(sub_page)
+    print(sub_page.xpath("string(.)"))
+
+    # //*[@id="ajaxtable"]/tbody[2]/tr[3]/td[2]/h3/a
 
 
 test_py_crawler()
