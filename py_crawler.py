@@ -62,9 +62,9 @@ def create_pages():
 
 
 elements = {"item": {"type": "td[2]/text()",
-                     "url": "td[2]/h3/a/@href",
                      "author": "td[3]/a/text()",
                      "title": "td[2]/h3/a/text()", },
+            "url": "td[2]/h3/a/@href",
             "sub_item": {"text": "//div[@class=\"tpc_content do_not_catch\"]/a/@href"},
             "root": "//tr[@class=\"tr3 t_one tac\"]"}
 
@@ -75,9 +75,8 @@ def get_item(page):
     for ii, item in enumerate(items):
         si = []
         for i in elements["item"]:
-            print(''.join(item.xpath(elements["item"][i])).strip(), end="|")
             si.append(''.join(item.xpath(elements["item"][i])).strip())
-        sub_page_url = "http://www.t66y.com/" + ''.join(item.xpath(elements["item"]["url"]))
+        sub_page_url = "http://www.t66y.com/" + ''.join(item.xpath(elements["url"]))
         d = get_content(sub_page_url)
         real_url = str(d.xpath(elements["sub_item"]["text"])[0])
         si.append(real_url[24:].replace("______", "."))
