@@ -61,25 +61,26 @@ def create_pages():
 
 
 elements = {"item": {"type": "td[2]/text()",
-                     "title": "td[2]/h3/a/text()",
                      "url": "td[2]/h3/a/@href",
-                     "author": "td[3]/a/text()"},
-            "sub_item": {"text": "//div[@class=\"tpc_content do_not_catch\"/a/text()"},
+                     "author": "td[3]/a/text()",
+                     "title": "td[2]/h3/a/text()", },
+            "sub_item": {"text": "//div[@class=\"tpc_content do_not_catch\"]/a/@href"},
             "root": "//tr[@class=\"tr3 t_one tac\"]"}
 
 
 def test_py_crawler():
     pages = create_pages()
-    ir = get_content(pages[0]).xpath(elements["root"])
-    for i in elements["item"]:
-        print(''.join(ir[4].xpath(elements["item"][i])).strip())
-    sub_page_url = "http://www.t66y.com/" + ''.join(ir[4].xpath(elements["item"]["url"]))
-    print(sub_page_url)
-    sub_page = get_content(sub_page_url)
-    print(sub_page)
-    print(sub_page.xpath("string(.)"))
-
-    # //*[@id="ajaxtable"]/tbody[2]/tr[3]/td[2]/h3/a
+    for ip, page in enumerate(pages[1:]):
+        items = get_content(page).xpath(elements["root"])
+        for ii, item in enumerate(items):
+            print("%5d" % (ip * 100 + ii), end=".")
+            sub_page_url = "http://www.t66y.com/" + ''.join(item.xpath(elements["item"]["url"]))
+            print("%30s" % sub_page_url, end=" ")
+            for i in elements["item"]:
+                print(''.join(item.xpath(elements["item"][i])).strip(), end="|")
+            d = get_content(sub_page_url)
+            real_url = str(d.xpath(elements["sub_item"]["text"])[0])
+            print(real_url[24:].replace("______", "."))
 
 
 test_py_crawler()
