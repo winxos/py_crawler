@@ -9,8 +9,9 @@ import urllib.error
 from lxml import etree
 import logging
 import socket
+from multiprocess_pool import multi_thread_do_job
 
-socket.setdefaulttimeout(3)
+socket.setdefaulttimeout(10)
 logging.basicConfig(
     level=logging.DEBUG,
     filename='log.txt',
@@ -68,19 +69,26 @@ elements = {"item": {"type": "td[2]/text()",
             "root": "//tr[@class=\"tr3 t_one tac\"]"}
 
 
+def get_item(page):
+    ret = []
+    items = get_content(page).xpath(elements["root"])
+    for ii, item in enumerate(items):
+        si = []
+        for i in elements["item"]:
+            print(''.join(item.xpath(elements["item"][i])).strip(), end="|")
+            si.append(''.join(item.xpath(elements["item"][i])).strip())
+        sub_page_url = "http://www.t66y.com/" + ''.join(item.xpath(elements["item"]["url"]))
+        d = get_content(sub_page_url)
+        real_url = str(d.xpath(elements["sub_item"]["text"])[0])
+        si.append(real_url[24:].replace("______", "."))
+        ret += si
+        print(si)
+    return ret
+
+
 def test_py_crawler():
-    pages = create_pages()
-    for ip, page in enumerate(pages[1:]):
-        items = get_content(page).xpath(elements["root"])
-        for ii, item in enumerate(items):
-            print("%5d" % (ip * 100 + ii), end=".")
-            sub_page_url = "http://www.t66y.com/" + ''.join(item.xpath(elements["item"]["url"]))
-            print("%30s" % sub_page_url, end=" ")
-            for i in elements["item"]:
-                print(''.join(item.xpath(elements["item"][i])).strip(), end="|")
-            d = get_content(sub_page_url)
-            real_url = str(d.xpath(elements["sub_item"]["text"])[0])
-            print(real_url[24:].replace("______", "."))
+    pages = create_pages()[1:]
+    multi_thread_do_job(pages, get_item)
 
 
 test_py_crawler()
