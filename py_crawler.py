@@ -71,22 +71,25 @@ elements = {"item": {"type": "td[2]/text()",
 
 def get_item(page):
     ret = []
-    items = get_content(page).xpath(elements["root"])
-    for ii, item in enumerate(items):
-        si = []
-        for i in elements["item"]:
-            si.append(''.join(item.xpath(elements["item"][i])).strip())
-        sub_page_url = "http://www.t66y.com/" + ''.join(item.xpath(elements["url"]))
-        d = get_content(sub_page_url)
-        real_url = str(d.xpath(elements["sub_item"]["text"])[0])
-        si.append(real_url[24:].replace("______", "."))
-        ret += si
-        print(si)
-    return ret
+    cache = get_content(page)
+    if cache is not None:
+        items = cache.xpath(elements["root"])
+        for ii, item in enumerate(items):
+            si = []
+            for i in elements["item"]:
+                si.append(''.join(item.xpath(elements["item"][i])).strip())
+            sub_page_url = "http://www.t66y.com/" + ''.join(item.xpath(elements["url"]))
+            d = get_content(sub_page_url)
+            real_url = str(d.xpath(elements["sub_item"]["text"])[0])
+            si.append(real_url[24:].replace("______", "."))
+            ret += si
+            print(si)
+        return ret
+    return None
 
 
 def test_py_crawler():
-    pages = create_pages()[1:]
+    pages = create_pages()
     multi_thread_do_job(pages, get_item)
 
 
