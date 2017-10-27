@@ -21,9 +21,12 @@ def init_db():
     DBSession = sessionmaker(bind=engine)
     Base.metadata.create_all(engine)
     Session = DBSession()
-    n = Items(title="adsf", url="ooo")
+    n = Items(title="aa", url="ooo")
     Session.add(n)
     Session.commit()
+    user = Session.query(Items).filter(Items.title == 'aa').first()
+    print('type:', type(user))
+    print('name:', user.url)
     Session.close()
 
 
